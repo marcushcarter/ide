@@ -1,3 +1,13 @@
+/build/
+/bin/
+/out/
+/CMakeFiles/
+/CMakeCache.txt
+/*.cmake
+/*.make
+/*.ninja
+/.vscode/
+
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
