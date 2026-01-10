@@ -3,7 +3,13 @@
 
 namespace ide
 {
-    bool IsHidden(const std::filesystem::path& path) {
+    Filesystem::Filesystem(PanelStack* panelStack, const std::string& name) 
+        : IPanel(panelStack, name) {}
+    
+    void Filesystem::OnAttach() {}
+    void Filesystem::OnDetach() {}
+
+    bool Filesystem::IsHidden(const std::filesystem::path& path) {
         #ifdef _WIN32
             DWORD attrs = GetFileAttributesW(path.wstring().c_str());
             return (attrs != INVALID_FILE_ATTRIBUTES) && (attrs & FILE_ATTRIBUTE_HIDDEN);
@@ -11,12 +17,22 @@ namespace ide
             return path.filename().string()[0] == '.';
         #endif
     }
-
-    Filesystem::Filesystem(PanelStack* panelStack, const std::string& name) 
-        : IPanel(panelStack, name) {}
     
-    void Filesystem::OnAttach() {}
-    void Filesystem::OnDetach() {}
+    bool Filesystem::GitUntracked(const std::filesystem::path& path) {
+        return false;
+    }
+
+    bool Filesystem::GitSubmodule(const std::filesystem::path& path) {
+        return false;
+    }
+
+    bool Filesystem::GitChanged(const std::filesystem::path& path) {
+        return false;
+    }
+
+    bool Filesystem::GitAdded(const std::filesystem::path& path) {
+        return false;
+    }
 
     void Filesystem::DrawFolderRecursive(const std::filesystem::path& folderPath, int indentLevel) {
         if (!std::filesystem::exists(folderPath))
@@ -26,13 +42,25 @@ namespace ide
             if (!entry.is_directory() || IsHidden(entry.path()))
                 continue;
 
-            ImVec4 textColor = ImVec4(1.0, 1.0f, 1.0f, 1.0f);
+            ImVec4 textColor = ImVec4(m_normalColor.x, m_normalColor.y, m_normalColor.z, 1.0f);
 
-            if (true) {
-                ImVec2 cursor = ImGui::GetCursorScreenPos();
-                float windowWidth = ImGui::GetWindowWidth();
-                ImVec2 circlePos = ImVec2(ImGui::GetWindowPos().x + windowWidth - m_dotRadius - m_dotPadding, cursor.y + m_dotRadius + 4.0f);
-                ImU32 color = IM_COL32(255, 255, 255, 255);
+            ImVec2 cursor = ImGui::GetCursorScreenPos();
+            float windowWidth = ImGui::GetWindowWidth();
+            ImVec2 circlePos = ImVec2(ImGui::GetWindowPos().x + windowWidth - m_dotRadius - m_dotPadding, cursor.y + m_dotRadius + 4.0f);
+
+            if (GitAdded(entry)) {
+                textColor = ImVec4(m_addedColor.x, m_addedColor.y, m_addedColor.z, 1.0f);
+                ImU32 color = IM_COL32(m_addedColor.x*255, m_addedColor.y*255, m_addedColor.z*255, 255);
+                ImGui::GetWindowDrawList()->AddCircleFilled(circlePos, m_dotRadius, color);
+            }
+            if (GitChanged(entry)) {
+                textColor = ImVec4(m_changedColor.x, m_changedColor.y, m_changedColor.z, 1.0f);
+                ImU32 color = IM_COL32(m_changedColor.x*255, m_changedColor.y*255, m_changedColor.z*255, 255);
+                ImGui::GetWindowDrawList()->AddCircleFilled(circlePos, m_dotRadius, color);
+            }
+            if (GitUntracked(entry)) {
+                textColor = ImVec4(m_untrackedColor.x, m_untrackedColor.y, m_untrackedColor.z, 1.0f);
+                ImU32 color = IM_COL32(m_untrackedColor.x*255, m_untrackedColor.y*255, m_untrackedColor.z*255, 255);
                 ImGui::GetWindowDrawList()->AddCircleFilled(circlePos, m_dotRadius, color);
             }
             ImGui::PushStyleColor(ImGuiCol_Text, textColor);
@@ -55,10 +83,10 @@ namespace ide
                 Application::SetSelected(entry.path());
             }
 
+            ImGui::PopStyleColor();
+
             if (m_FolderOpenStates[entry.path()])
                 DrawFolderRecursive(entry.path(), indentLevel + 1);
-
-            ImGui::PopStyleColor();
 
             ImGui::Unindent(indentLevel * m_indentSize);
             ImGui::PopID();
@@ -67,6 +95,36 @@ namespace ide
         for (const auto& entry : std::filesystem::directory_iterator(folderPath)) {
             if (entry.is_directory())
                 continue;
+
+            ImVec4 textColor = ImVec4(m_normalColor.x, m_normalColor.y, m_normalColor.z, 1.0f);
+
+            ImVec2 cursor = ImGui::GetCursorScreenPos();
+            float windowWidth = ImGui::GetWindowWidth();
+            ImVec2 circlePos = ImVec2(ImGui::GetWindowPos().x + windowWidth - m_dotRadius - m_dotPadding, cursor.y + m_dotRadius + 4.0f);
+
+            if (GitAdded(entry)) {
+                textColor = ImVec4(m_addedColor.x, m_addedColor.y, m_addedColor.z, 1.0f);
+                ImU32 color = IM_COL32(m_addedColor.x*255, m_addedColor.y*255, m_addedColor.z*255, 255);
+                ImGui::GetWindowDrawList()->AddCircleFilled(circlePos, m_dotRadius, color);
+            }
+            if (GitChanged(entry)) {
+                textColor = ImVec4(m_changedColor.x, m_changedColor.y, m_changedColor.z, 1.0f);
+                ImU32 color = IM_COL32(m_changedColor.x*255, m_changedColor.y*255, m_changedColor.z*255, 255);
+                ImGui::GetWindowDrawList()->AddCircleFilled(circlePos, m_dotRadius, color);
+            }
+            if (GitSubmodule(entry)) {
+                textColor = ImVec4(m_submoduleColor.x, m_submoduleColor.y, m_submoduleColor.z, 1.0f);
+                ImU32 color = IM_COL32(m_submoduleColor.x*255, m_submoduleColor.y*255, m_submoduleColor.z*255, 255);
+                ImGui::GetWindowDrawList()->AddCircleFilled(circlePos, m_dotRadius, color);
+            }
+            if (GitUntracked(entry)) {
+                textColor = ImVec4(m_untrackedColor.x, m_untrackedColor.y, m_untrackedColor.z, 1.0f);
+                ImU32 color = IM_COL32(m_untrackedColor.x*255, m_untrackedColor.y*255, m_untrackedColor.z*255, 255);
+                ImGui::GetWindowDrawList()->AddCircleFilled(circlePos, m_dotRadius, color);
+            }
+            ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+
+            //
             
             std::filesystem::path filePath = entry.path();
             std::string name = filePath.filename().string();
@@ -88,6 +146,8 @@ namespace ide
                 Application::OpenFile(entry.path());
                 Application::SetSelected(entry.path());
             }
+
+            ImGui::PopStyleColor();
 
             ImGui::Unindent(indentLevel * m_indentSize);
             ImGui::PopID();

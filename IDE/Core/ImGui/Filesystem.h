@@ -18,10 +18,18 @@ namespace ide
         constexpr static float m_dotPadding = 16.0f;
         constexpr static float m_dotRadius = 4.0f;
 
-        glm::vec4 m_untrackedColor = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
-        glm::vec4 m_addedColor = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
-        glm::vec4 m_removedColor = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
-        glm::vec4 m_changedColor = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+        glm::vec3 m_normalColor = glm::vec3(1);
+        glm::vec3 m_untrackedColor = glm::vec3(0.5f, 0.5f, 0.5f);
+        glm::vec3 m_submoduleColor = glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::vec3 m_changedColor = glm::vec3(1.0f, 1.0f, 0.0f);
+        glm::vec3 m_addedColor = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        bool IsHidden(const std::filesystem::path& path);
+
+        bool GitUntracked(const std::filesystem::path& path);
+        bool GitSubmodule(const std::filesystem::path& path);
+        bool GitChanged(const std::filesystem::path& path);
+        bool GitAdded(const std::filesystem::path& path);
 
         void DrawFolderRecursive(const std::filesystem::path& folderPath, int indentLevel = 0);
 	};
