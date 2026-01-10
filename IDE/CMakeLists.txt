@@ -17,11 +17,12 @@ target_link_libraries(IDE PUBLIC
     glm
     imgui
     stb
+    tinyfiledialogs
     Impl
     ${CMAKE_DL_LIBS}
 )
 
-add_executable(IDEApp Entry/main.cpp)
+add_executable(IDEApp WIN32 Entry/main.cpp)
 
 target_link_libraries(IDEApp PRIVATE IDE)
 

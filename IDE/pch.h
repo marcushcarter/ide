@@ -1,7 +1,11 @@
 #pragma once
 
+#include <windows.h>
 #include <iostream>
 #include <filesystem>
+#include <string>
+#include <vector>
+#include <unordered_map>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -16,3 +20,5 @@
 #include <imgui_internal.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+
+#include <tinyfiledialogs.h>

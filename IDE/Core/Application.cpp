@@ -1,10 +1,5 @@
 #include "Core/Application.h"
-#include "Core/Window/Window.h"
-#include "Core/ImGui/ImGuiLayer.h"
-#include "Core/ImGui/PanelStack.h"
-#include "Core/ImGui/Dockspace.h"
-#include "Core/ImGui/MenuPanel.h"
-#include "Core/ImGui/DemoPanel.h"
+#include "IDE.h"
 
 namespace ide
 {
@@ -22,8 +17,11 @@ namespace ide
             return false;
 
         m_panelStack->PushPanel(new Dockspace(m_panelStack));
-		m_panelStack->PushPanel(new MenuPanel(m_panelStack));
-        m_panelStack->PushPanel(new DemoPanel(m_panelStack));
+		m_panelStack->PushPanel(new Menu(m_panelStack));
+        m_panelStack->PushPanel(new Filesystem(m_panelStack));
+        m_panelStack->PushPanel(new Terminal(m_panelStack));
+        m_panelStack->PushPanel(new TextEditor(m_panelStack));
+        // m_panelStack->PushPanel(new DemoPanel(m_panelStack));
 
         std::cout << "Application initialized\n";
         return true;
@@ -73,6 +71,8 @@ namespace ide
         while (!std::filesystem::exists(root / "Resources") && root.has_parent_path())
             root = root.parent_path();
         m_projectRoot = root;
+
+        m_selectedFolder = m_projectRoot;
 
         std::cout << "Project root: " << root << "\n";
         return new Application();

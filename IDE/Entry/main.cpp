@@ -1,6 +1,6 @@
 #include <IDE.h>
 
-int main() {
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     ide::Application* app = ide::Application::CreateApplication();
     if (!app->Init())
         return -1;

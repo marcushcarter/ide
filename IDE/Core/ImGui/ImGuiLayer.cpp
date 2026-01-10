@@ -25,7 +25,7 @@ namespace ide
 		
 		cfg.MergeMode = true;
 		static const ImWchar icons_ranges[] = { 0xF000, 0xF8FF, 0 };
-		io.Fonts->AddFontFromFileTTF((Application::GetRoot() / "Resources/Fonts/vscode-codicon/vscode-codicon.ttf").string().c_str(), 13.0f, &cfg, icons_ranges);
+		io.Fonts->AddFontFromFileTTF((Application::GetRoot() / "Resources/Fonts/vscode-codicon/vscode-codicon.ttf").string().c_str(), 35.0f, &cfg, icons_ranges);
 
     	ImGui::StyleColorsDark();
 
