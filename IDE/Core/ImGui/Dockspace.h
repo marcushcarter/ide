@@ -1,17 +1,16 @@
 #pragma once
-#include "Panels/IPanel.h"
+#include "Core/ImGui/IPanel.h"
 
-namespace ballistic
+namespace ide
 {
 	class Dockspace : public IPanel {
 	public:
-        Dockspace(LayerContext& context, PanelStack& panelStack, const std::string& name = "Demo");
+        Dockspace(PanelStack* panelStack, const std::string& name = "Dockspace");
         ~Dockspace() override { OnDetach(); }
         
 		void OnAttach() override;
 		void OnDetach() override;
 		void OnUpdate(float deltaTime) override;
-		void OnEvent(IEvent& e) override;
 	};
 
-} // namespace ballistic
+} // namespace ide

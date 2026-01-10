@@ -4,8 +4,8 @@
 namespace ide
 {
     class Window;
-    class Renderer;
-    class World;
+    class ImGuiLayer;
+    class PanelStack;
 
     class Application
     {
@@ -23,6 +23,8 @@ namespace ide
     
     private:
         Window* m_window = nullptr;
+        ImGuiLayer* m_imguiLayer = nullptr;
+        PanelStack* m_panelStack = nullptr;
 
         static inline std::filesystem::path m_projectRoot;
     };

@@ -1,9 +1,9 @@
-#include "Panels/Dockspace.h"
+#include "Core/ImGui/Dockspace.h"
 
-namespace ballistic
+namespace ide
 {
-    Dockspace::Dockspace(LayerContext& context, PanelStack& panelStack, const std::string& name) 
-        : IPanel(context, panelStack, name) {}
+    Dockspace::Dockspace(PanelStack* panelStack, const std::string& name) 
+        : IPanel(panelStack, name) {}
     
     void Dockspace::OnAttach() {}
     void Dockspace::OnDetach() {}
@@ -36,6 +36,4 @@ namespace ballistic
         ImGui::PopStyleVar(2);
     }
 
-    void Dockspace::OnEvent(IEvent& e) {}
-
-} // namespace ballistic
+} // namespace ide

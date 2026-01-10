@@ -2,7 +2,6 @@
 
 namespace ide
 {
-
     bool Window::Init() {
         if (!glfwInit()) {
             std::cout << "Failed to initialize GLFW\n";
@@ -14,7 +13,7 @@ namespace ide
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-        m_nativeWindow = glfwCreateWindow(m_state.dim.x, m_state.dim.y, "ide RTX", nullptr, nullptr);
+        m_nativeWindow = glfwCreateWindow(m_state.dim.x, m_state.dim.y, "Ballistic Code Editor", nullptr, nullptr);
         if (!m_nativeWindow) {
             std::cout << "Failed to create window\n";
             glfwTerminate();
