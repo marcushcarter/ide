@@ -11,14 +11,18 @@
   },
   "build": {
     "appId": "com.marcus.ballistic-ide",
-    "productName": "MyIDE",
+    "productName": "Ballistic IDE",
+    "directories": {
+      "output": "dist"
+    },
     "files": [
       "**/*"
     ],
     "win": {
+      "target": "nsis",
       "icon": "icon.ico",
-      "target": "dir",
-      "forceCodeSigning": false
+      "forceCodeSigning": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     }
   },
   "devDependencies": {
