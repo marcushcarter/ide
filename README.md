@@ -1,4 +1,4 @@
-# ballistic-ide
+# ide
 A minimal IDE built with electron.
 
 ### Download
