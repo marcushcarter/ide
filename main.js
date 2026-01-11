@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, Tray } = require("electron");
 const path = require("path");
 
 function createWindow() {
@@ -7,13 +7,15 @@ function createWindow() {
         height: 800,
         frame: false,
         titleBarStyle: 'hidden',
-        icon: path.join(__dirname, "icon.ico"),
+        icon: path.join(__dirname, "assets/icon.ico"),
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
-            nodeIntegration: false,   // must be false for preload to work
-            contextIsolation: true    // must be true for preload to work
+            nodeIntegration: false,
+            contextIsolation: true
         }
     });
+    const iconPath = path.join(__dirname, "assets/icon.ico")
+    const tray = new Tray(iconPath);
 
     win.loadFile("renderer/index.html");
 
