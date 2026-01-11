@@ -17,7 +17,7 @@ function createWindow() {
     const iconPath = path.join(__dirname, "assets/icon.ico")
     const tray = new Tray(iconPath);
 
-    win.loadFile("renderer/index.html");
+    win.loadFile("docs/index.html");
 
     ipcMain.on('window-control', (event, action) => {
         const win = BrowserWindow.getFocusedWindow();
