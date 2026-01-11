@@ -34,3 +34,7 @@ body {
 #window-controls button:hover {
     background-color: #333;
 }
+
+#window-controls #close:hover {
+    background-color: #e81123;
+}
