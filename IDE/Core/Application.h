@@ -1,6 +1,8 @@
 #pragma once
 #include "pch.h"
 
+#define BALLISTIC_IDE_VERSION "v1.0"
+
 namespace ide
 {
     class Window;

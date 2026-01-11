@@ -4,6 +4,8 @@
 namespace ide
 {
     bool Application::Init() {
+        std::cout << "Ballistic IDE " << BALLISTIC_IDE_VERSION << " (c) 2025-present Marcus Carter.";
+
         m_window = new Window();
         if (!m_window->Init())
             return false;

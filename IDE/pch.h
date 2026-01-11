@@ -7,6 +7,11 @@
 #include <vector>
 #include <unordered_map>
 #include <fstream>
+#include <thread>
+#include <mutex>
+#include <vector>
+#include <atomic>
+#include <sstream>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

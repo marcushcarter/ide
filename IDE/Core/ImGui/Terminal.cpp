@@ -10,6 +10,7 @@ namespace ide
 
     void Terminal::OnUpdate(float deltaTime) {
         ImGui::Begin("Terminal");
+        ImGui::Text("Terminals are not available in this version of the IDE. Use a terminal or a command prompt instead.");
         ImGui::End();
     }
 

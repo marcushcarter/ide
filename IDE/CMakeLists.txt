@@ -29,3 +29,6 @@ target_link_libraries(IDEApp PRIVATE IDE)
 if (WIN32)
     target_link_libraries(IDEApp PRIVATE opengl32)
 endif()
+
+set(EDITOR_ICON "${CMAKE_SOURCE_DIR}/Resources/Icons/icon.rc")
+target_sources(IDEApp PRIVATE ${EDITOR_ICON})
