@@ -1,0 +1,27 @@
+{
+  "name": "ide",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "npx electron .",
+    "build": "npx tsc && electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^24.6.0",
+    "@types/node": "^20.5.6",
+    "typescript": "^5.2.2"
+  },
+  "build": {
+    "appId": "com.marcushcarter.ide",
+    "productName": "MyIDE",
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist-build"
+    },
+    "win": {
+      "target": "nsis",
+      "sign": false
+    }
+  }
+}
