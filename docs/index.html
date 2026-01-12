@@ -6,9 +6,10 @@
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-    <div id="title-bar">
-        <div id="drag-region">
-            <span id="title">Ballistic IDE</span>
+    <div id="menu-bar">
+        <div id="menu-left">
+            <img src="../assets/icon.png" id="app-icon">
+            <button id="menu-btn">☰</button>
         </div>
         <div id="window-controls">
             <button id="minimize">–</button>
@@ -17,7 +18,19 @@
         </div>
     </div>
 
-    <div id="editor" style="height:100%; width:100%;"></div>
+    <div id="activity-bar">
+        <button class="activity-btn">A</button>
+        <button class="activity-btn">B</button>
+        <button class="activity-btn">C</button>
+        <button class="activity-btn">D</button>
+        <button class="activity-btn">E</button>
+        <button class="activity-btn">F</button>
+    </div>
+
+    <div id="side-bar"></div>
+    <div id="terminal"></div>
+    <div id="status-bar"></div>
+    <div id="editor"></div>
 
     <script src="renderer.js"></script>
 </body>
