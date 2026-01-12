@@ -6,22 +6,36 @@
 
     --ballistic-purple: rgb(218, 177, 255);
 
-    --menubar-height: 30px;
-    --activitybar-width: 40px;
+    --menubar-height: 34px;
+    --activitybar-width: 29px;
     --sidebar-width: 200px;
     --statusbar-height: 15px;
     --terminal-height: 100px;
+
+    --border: 1px solid #333;
+
+    --light-panel-bg: #1e1e1e;
+    --dark-panel-bg: #121212;
 }
 
 /* MENU BAR */
 
 .menu-bar {
+    position: absolute;
     display: flex;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: var(--menubar-height);
+    z-index: 9999;
+    
+    background-color: var(--light-panel-bg);
+    border-bottom: var(--border);
+
     justify-content: space-between;
     align-items: center;
-    height: var(--menubar-height);
-    background-color: #1e1e1e;
     font-size: 12px;
+    
     -webkit-user-select: none;
     -webkit-app-region: drag;
 }
@@ -44,10 +58,12 @@
 
 .menu-btn:hover {
     background-color: #333;
+    color: white;
 }
 
 .menu-bar #close:hover {
     background-color: #e81123;
+    color: white;
 }
 
 .menu-bar .app-icon {
@@ -65,12 +81,14 @@
     position: absolute;
     top: var(--menubar-height);
     left: 0;
-    background-color: #1e1e1e;
-    border: 1px solid #333;
-    display: none;
-    flex-direction: column;
     min-width: 200px;
     z-index: 1000;
+
+    background-color: var(--light-panel-bg);
+    border: var(--border);
+
+    display: none;
+    flex-direction: column;
     border-radius: 5px;
     padding: 5px 5px;
 }
@@ -83,7 +101,6 @@
 
 .menu-dropdown .menu-item:hover {
     background-color: #333;
-
     color: white;
 }
 
@@ -106,13 +123,16 @@
 
 .activity-bar {
     position: absolute;
+    display: flex;
     top: var(--menubar-height);
     left: 0;
     width: var(--activitybar-width);
-    height: calc(100vh - var(--menubar-height) - 15px);
-    background-color: #1e1e1e;
+    height: calc(100vh - var(--menubar-height) - var(--statusbar-height));
+    z-index: 3;
 
-    display: flex;
+    background-color: var(--dark-panel-bg);
+    border-right: var(--border);
+
     flex-direction: column;
     align-items: center;
 }
@@ -125,7 +145,7 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    color: lightgray;
+    color: gray;
 }
 
 .activity-btn:hover,
@@ -150,6 +170,48 @@
     padding-bottom: 15px;
 }
 
+/* STATUS BAR */
+
+.status-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: var(--statusbar-height);
+    z-index: 4;
+    
+    background-color: var(--light-panel-bg);
+    border-top: var(--border);
+}
+
+/* STATUS BAR */
+
+.side-bar {
+    position: absolute;
+    top: var(--menubar-height);
+    left: calc(var(--activitybar-width));
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--menubar-height) - var(--statusbar-height));
+    z-index: 2;
+    
+    background-color: var(--dark-panel-bg);
+    border-right: var(--border);
+}
+
+/* STATUS BAR */
+
+.terminal {
+    position: absolute;
+    bottom: var(--statusbar-height);
+    left: calc(var(--activitybar-width) + var(--sidebar-width));
+    width: calc(100vw - var(--activitybar-width) - var(--sidebar-width));
+    height: var(--terminal-height);
+    z-index: 1;
+    
+    background-color: var(--dark-panel-bg);
+    border-top: var(--border);
+}
+
 /* EDITOR */
 
 .editor {
@@ -158,9 +220,11 @@
     left: calc(var(--activitybar-width) + var(--sidebar-width));
     width: calc(100vw - var(--activitybar-width) - var(--sidebar-width));
     height: calc(100vh - var(--menubar-height) - var(--statusbar-height) - var(--terminal-height));
+    z-index: 0;
+
     box-shadow: border-box;
     background-image:
         linear-gradient(to right, black, red),
-        linear-gradient(to bottom, black, lime);
+        linear-gradient(to bottom, lime, black);
     background-blend-mode: screen;
 }
