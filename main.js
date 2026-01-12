@@ -9,7 +9,7 @@ function createWindow() {
         minHeight: 500,
         frame: false,
         titleBarStyle: 'hidden',
-        icon: path.join(__dirname, "assets/icon.ico"),
+        icon: path.join(__dirname, "assets/icons/icon.ico"),
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             nodeIntegration: false,
@@ -17,7 +17,7 @@ function createWindow() {
         }
     });
 
-    const tray = new Tray(path.join(__dirname, "assets/icon.ico"));
+    const tray = new Tray(path.join(__dirname, "assets/icons/icon.ico"));
 
     win.loadFile("docs/index.html");
 

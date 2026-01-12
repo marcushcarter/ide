@@ -1,14 +1,16 @@
 .app {
-    --menubar-height: 30px;
-    --activitybar-width: 30px;
-    --statusbar-height: 30px;
-
-    --ballistic-purple: rgb(218, 177, 255);
-
     margin: 0;
     font-family: sans-serif;
     background-color: #111;
     color: white;
+
+    --ballistic-purple: rgb(218, 177, 255);
+
+    --menubar-height: 30px;
+    --activitybar-width: 40px;
+    --sidebar-width: 200px;
+    --statusbar-height: 15px;
+    --terminal-height: 100px;
 }
 
 /* MENU BAR */
@@ -35,7 +37,7 @@
     height: var(--menubar-height);
     background: none;
     border: none;
-    color: white;
+    color: lightgray;
     cursor: pointer;
     -webkit-app-region: no-drag;
 }
@@ -81,9 +83,12 @@
 
 .menu-dropdown .menu-item:hover {
     background-color: #333;
+
+    color: white;
 }
 
 .menu-item {
+    color: lightgray;
     border-radius: 5px;
     padding: 5px 5px;
     cursor: pointer;
@@ -97,14 +102,62 @@
     color: gray;
 }
 
+/*ACTIVITY BAR*/
+
+.activity-bar {
+    position: absolute;
+    top: var(--menubar-height);
+    left: 0;
+    width: var(--activitybar-width);
+    height: calc(100vh - var(--menubar-height) - 15px);
+    background-color: #1e1e1e;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.activity-btn {
+    border: none;
+    background: none;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: lightgray;
+}
+
+.activity-btn:hover,
+.activity-btn.selected {
+    color: white;
+}
+
+.activity-top,
+.activity-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.activity-top {
+    padding-top: 15px;
+}
+
+.activity-bottom {
+    margin-top: auto;
+    padding-bottom: 15px;
+}
+
 /* EDITOR */
 
 .editor {
     position: absolute;
     top: var(--menubar-height);
-    left: 0;
-    width: 100vw;
-    height: calc(100vh - var(--menubar-height));
+    left: calc(var(--activitybar-width) + var(--sidebar-width));
+    width: calc(100vw - var(--activitybar-width) - var(--sidebar-width));
+    height: calc(100vh - var(--menubar-height) - var(--statusbar-height) - var(--terminal-height));
     box-shadow: border-box;
     background-image:
         linear-gradient(to right, black, red),

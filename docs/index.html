@@ -9,7 +9,7 @@
 
     <div class="menu-bar">
         <div>
-            <img src="../assets/icon.png" class="app-icon">
+            <img src="../assets/icons/icon.png" class="app-icon">
             <div class="menu-wrapper">
                 <button class="menu-btn" id="menu-btn">☰</button>
                 <div class="menu-dropdown" id="menu-dropdown">
@@ -19,8 +19,7 @@
                     </div>
                     <div id="current-file-path"></div>
                     <div class="menu-item" data-action="open-file">
-                        Open File
-                        <span class="shortcut">Ctrl+O</span>
+                        Open File...
                     </div>
                     <div id="current-folder-path"></div>
                 </div>
@@ -32,6 +31,18 @@
             <button class="menu-btn" id="close">×</button>
         </div>
     </div>
+
+    <div class="activity-bar">
+        <div class="activity-top">
+            <button class="activity-btn" data-id="files" data-icon="files"></button>
+            <button class="activity-btn" data-id="git" data-icon="git"></button>
+            <button class="activity-btn" data-id="cmake" data-icon="cmake"></button>
+        </div>
+        <div class="activity-bottom">
+            <button class="activity-btn" data-id="settings" data-icon="settings"></button>
+        </div>
+    </div>
+
 
     <div class="editor"></div>
 

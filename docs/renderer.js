@@ -1,14 +1,46 @@
+
 let currentFilePath = null;
 let currentFolderPath = null;
 
 const currentFilePathEl = document.getElementById("current-file-path");
 const currentFolderPathEl = document.getElementById("current-folder-path");
 
+let selectedActivity = null;
+
 window.addEventListener('DOMContentLoaded', () => {
+    injectIcons();
     initWindowControls();
     initMenuDropdown();
     initButtonControls();
+    initActivityControls();
 });
+
+const ICONS = {
+    files: "../assets/fonts/vscode-codicon/files.svg",
+    git: "../assets/fonts/vscode-codicon/git-branch.svg",
+    cmake: "../assets/icons/cmake.svg",
+    settings: "../assets/fonts/vscode-codicon/settings-gear.svg"
+};
+
+function injectIcons(root = document) {
+    root.querySelectorAll("[data-icon]").forEach(el => {
+        if (el.dataset.iconInjected) return;
+
+        const iconName = el.dataset.icon;
+        const path = ICONS[iconName];
+        if (!path) {
+            console.warn(`Missing icon: ${iconName}`);
+            return;
+        }
+
+        fetch(path)
+            .then(r => r.text())
+            .then(svg => {
+                el.innerHTML = svg;
+                el.dataset.iconInjected = "true";
+            });
+    });
+}
 
 function initWindowControls() {
     const minimizeBtn = document.getElementById("minimize");
@@ -54,39 +86,65 @@ function initMenuDropdown() {
             await handleMenuAction(action);
         });
     });
+
+    async function handleMenuAction(action) {
+        switch (action) {
+            case "open-folder":
+                const folder = await window.electronAPI.openProjectFolder();
+                if (folder) {
+                    currentFolderPath = folder;
+                    console.log("Current project folder:", currentFolderPath);
+                    currentFilePathEl.textContent = currentFolderPath;
+                }
+                break;
+            case "open-file":
+                const file = await window.electronAPI.openFile();
+                if (file) {
+                    currentFilePath = file;
+                    console.log("Current file path:", currentFilePath);
+                    currentFolderPathEl.textContent = currentFilePath;
+                }
+                break;
+            default:
+                console.warn("Unknown menu action:", action);
+        }
+    }
 }
 
 function initButtonControls() {
     window.addEventListener("keydown", async (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
-        e.preventDefault();
-        await handleMenuAction("open-folder");
-    }
-});
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+            e.preventDefault();
+            await handleMenuAction("open-folder");
+        }
+    });
 
 }
 
-async function handleMenuAction(action) {
-    switch (action) {
-        case "open-folder":
-            const folder = await window.electronAPI.openProjectFolder();
-            if (folder) {
-                currentFolderPath = folder;
-                console.log("Current project folder:", currentFolderPath);
+function initActivityControls() {
+    const activityButtons = document.querySelectorAll('.activity-btn');
 
-                currentFilePathEl.textContent = currentFolderPath;
-            }
-            break;
-        case "open-file":
-            const file = await window.electronAPI.openFile();
-            if (file) {
-                currentFilePath = file;
-                console.log("Current file path:", currentFilePath);
+    if (activityButtons.length > 0) {
+        selectedActivity = activityButtons[0].dataset.id;
+    }
 
-                currentFolderPathEl.textContent = currentFilePath;
+    activityButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedActivity = btn.dataset.id;
+            updateActivitySelection();
+        });
+    });
+
+    updateActivitySelection();
+
+    function updateActivitySelection() {
+        activityButtons.forEach(btn => {
+            if (btn.dataset.id === selectedActivity) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
             }
-            break;
-        default:
-            console.warn("Unknown menu action:", action);
+        });
     }
 }
