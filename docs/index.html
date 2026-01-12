@@ -5,32 +5,35 @@
     <title>Ballistic Code</title>
     <link href="styles.css" rel="stylesheet">
 </head>
-<body>
-    <div id="menu-bar">
-        <div id="menu-left">
-            <img src="../assets/icon.png" id="app-icon">
-            <button id="menu-btn">☰</button>
+<body class="app">
+
+    <div class="menu-bar">
+        <div>
+            <img src="../assets/icon.png" class="app-icon">
+            <div class="menu-wrapper">
+                <button class="menu-btn" id="menu-btn">☰</button>
+                <div class="menu-dropdown" id="menu-dropdown">
+                    <div class="menu-item" data-action="open-folder">
+                        Open Folder...
+                        <span class="shortcut">Ctrl+O</span>
+                    </div>
+                    <div id="current-file-path"></div>
+                    <div class="menu-item" data-action="open-file">
+                        Open File
+                        <span class="shortcut">Ctrl+O</span>
+                    </div>
+                    <div id="current-folder-path"></div>
+                </div>
+            </div>
         </div>
-        <div id="window-controls">
-            <button id="minimize">–</button>
-            <button id="maximize">□</button>
-            <button id="close">×</button>
+        <div>
+            <button class="menu-btn" id="minimize">–</button>
+            <button class="menu-btn" id="maximize">□</button>
+            <button class="menu-btn" id="close">×</button>
         </div>
     </div>
 
-    <div id="activity-bar">
-        <button class="activity-btn">A</button>
-        <button class="activity-btn">B</button>
-        <button class="activity-btn">C</button>
-        <button class="activity-btn">D</button>
-        <button class="activity-btn">E</button>
-        <button class="activity-btn">F</button>
-    </div>
-
-    <div id="side-bar"></div>
-    <div id="terminal"></div>
-    <div id="status-bar"></div>
-    <div id="editor"></div>
+    <div class="editor"></div>
 
     <script src="renderer.js"></script>
 </body>
