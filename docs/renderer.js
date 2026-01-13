@@ -2,6 +2,8 @@
 const { Terminal } = window;
 const { FitAddon } = window;
 
+let term, fitAddon;
+
 let currentFilePath = null;
 let currentFolderPath = null;
 
@@ -213,6 +215,7 @@ function initSidebarResize() {
         const rawWidth = e.clientX - activityWidth;
         const clamped = clampSidebar(rawWidth);
         app.style.setProperty("--sidebar-width", `${clamped}px`);
+        if (term && fitAddon) fitAddon.fit()
     });
 
     window.addEventListener("mouseup", () => {
@@ -258,6 +261,7 @@ function initTerminalResize() {
         const rawHeight = window.innerHeight - e.clientY - statusbar;
         const clamped = clampTerminal(rawHeight);
         app.style.setProperty("--terminal-height", `${clamped}px`);
+        if (term && fitAddon) fitAddon.fit();
     });
 
     window.addEventListener("mouseup", () => {
@@ -277,26 +281,68 @@ function initTerminal() {
     const terminalContainer = document.getElementById('terminal-container');
     if (!terminalContainer) return;
 
-    const term = new Terminal({
+    term = new Terminal({
         fontFamily: '"Fira Code", monospace',
         fontSize: 14,
         cursorBlink: true,
-        theme: { background: '#1e1e1e', foreground: '#ffffff' },
-        disableStdin: false
+        theme: { background: '#121212', foreground: '#ffffff' }
     });
 
-    const fitAddon = new FitAddon.FitAddon();
+    fitAddon = new FitAddon.FitAddon();
     term.loadAddon(fitAddon);
 
     term.open(terminalContainer);
     fitAddon.fit();
-
     term.focus();
 
-    // Terminal input/output hooks
+    // Terminal input/output
     term.onData(data => window.electronAPI.sendTerminalInput(data));
     window.electronAPI.onTerminalOutput(data => term.write(data));
+}
 
-    // Resize terminal when window resizes or sidebar changes
-    window.addEventListener('resize', resize);
+function initTerminalResize() {
+    const resizer = document.querySelector(".terminal-resizer");
+    const terminalEl = document.getElementById("terminal");
+    const app = document.querySelector(".app");
+    if (!resizer || !terminalEl || !app) return;
+
+    let isResizing = false;
+    const MIN_HEIGHT = 50;
+
+    function clampTerminal(height) {
+        const menubar = parseInt(getComputedStyle(app).getPropertyValue("--menubar-height"));
+        const statusbar = parseInt(getComputedStyle(app).getPropertyValue("--statusbar-height"));
+        const max = window.innerHeight - menubar - statusbar - 50;
+        return Math.max(MIN_HEIGHT, Math.min(max, height));
+    }
+
+    resizer.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        isResizing = true;
+        resizer.classList.add("active");
+        document.body.style.cursor = "ns-resize";
+        document.body.style.userSelect = "none";
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!isResizing) return;
+        const statusbar = parseInt(getComputedStyle(app).getPropertyValue("--statusbar-height"));
+        const rawHeight = window.innerHeight - e.clientY - statusbar;
+        const clamped = clampTerminal(rawHeight);
+        app.style.setProperty("--terminal-height", `${clamped}px`);
+        if (term && fitAddon) fitAddon.fit(); // force terminal to resize
+    });
+
+    window.addEventListener("mouseup", () => {
+        isResizing = false;
+        resizer.classList.remove("active");
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+    });
+
+    window.addEventListener("resize", () => {
+        const current = parseInt(getComputedStyle(app).getPropertyValue("--terminal-height"));
+        app.style.setProperty("--terminal-height", `${clampTerminal(current)}px`);
+        if (term && fitAddon) fitAddon.fit();
+    });
 }
