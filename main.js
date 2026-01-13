@@ -6,6 +6,7 @@ function createWindow() {
         width: 1280,
         height: 800,
         minWidth: 300,
+        minHeight: 300,
         frame: false,
         titleBarStyle: 'hidden',
         icon: path.join(__dirname, "assets/icons/icon.ico"),

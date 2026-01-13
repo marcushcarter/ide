@@ -17,11 +17,9 @@
                         Open Folder...
                         <span class="shortcut">Ctrl+O</span>
                     </div>
-                    <div id="current-file-path"></div>
                     <div class="menu-item" data-action="open-file">
                         Open File...
                     </div>
-                    <div id="current-folder-path"></div>
                 </div>
             </div>
         </div>
@@ -39,13 +37,26 @@
             <button class="activity-btn" data-id="cmake" data-icon="cmake"></button>
         </div>
         <div class="activity-bottom">
+            <button class="activity-btn" data-id="profile" data-icon="account"></button>
             <button class="activity-btn" data-id="settings" data-icon="settings"></button>
         </div>
     </div>
 
     <div class="status-bar"></div>
-    <div class="side-bar"></div>
-    <div class="terminal"></div>
+
+    <div class="side-bar">
+        <div id="current-activity"></div>
+        <div id="current-file-path"></div>
+        <div id="current-folder-path"></div>
+
+        <div class="sidebar-resizer"></div>
+    </div>
+    
+    <div class="terminal">
+        <span>The terminal is not available yet</span>
+
+        <div class="terminal-resizer"></div>
+    </div>
 
 
     <div class="editor"></div>

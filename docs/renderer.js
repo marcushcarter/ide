@@ -13,32 +13,28 @@ window.addEventListener('DOMContentLoaded', () => {
     initMenuDropdown();
     initButtonControls();
     initActivityControls();
+    initSidebarResize();
+    initTerminalResize();
 });
 
 const ICONS = {
     files: "../assets/fonts/vscode-codicon/files.svg",
     git: "../assets/fonts/vscode-codicon/git-branch.svg",
     cmake: "../assets/icons/cmake.svg",
+    account: "../assets/fonts/vscode-codicon/account.svg",
     settings: "../assets/fonts/vscode-codicon/settings-gear.svg"
 };
 
 function injectIcons(root = document) {
     root.querySelectorAll("[data-icon]").forEach(el => {
         if (el.dataset.iconInjected) return;
-
         const iconName = el.dataset.icon;
         const path = ICONS[iconName];
         if (!path) {
             console.warn(`Missing icon: ${iconName}`);
             return;
         }
-
-        fetch(path)
-            .then(r => r.text())
-            .then(svg => {
-                el.innerHTML = svg;
-                el.dataset.iconInjected = "true";
-            });
+        fetch(path).then(r => r.text()).then(svg => { el.innerHTML = svg; el.dataset.iconInjected = "true"; });
     });
 }
 
@@ -118,20 +114,43 @@ function initButtonControls() {
             await handleMenuAction("open-folder");
         }
     });
-
 }
 
 function initActivityControls() {
     const activityButtons = document.querySelectorAll('.activity-btn');
+    const app = document.querySelector('.app');
+    const sidebar = document.querySelector('.side-bar');
+    const activityLabel = document.getElementById('current-activity');
+    const DEFAULT_SIDEBAR_WIDTH = 200;
 
-    if (activityButtons.length > 0) {
-        selectedActivity = activityButtons[0].dataset.id;
-    }
+    let previousActivity = null;
+
+    const ACTIVITY_NAMES = {
+        files: 'Files',
+        git: 'Git',
+        cmake: 'CMake',
+        profile: 'Profile',
+        settings: 'Settings'
+    };
+
+    // if (activityButtons.length > 0) {
+    //     selectedActivity = activityButtons[0].dataset.id;
+    //     previousActivity = selectedActivity;
+    //     if (app) app.style.setProperty('--sidebar-width', `${DEFAULT_SIDEBAR_WIDTH}px`);
+    //     if (activityLabel) activityLabel.textContent = ACTIVITY_NAMES[selectedActivity] || '';
+    // }
 
     activityButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            selectedActivity = btn.dataset.id;
+            if (selectedActivity === btn.dataset.id) {
+                selectedActivity = null;
+            } else {
+                selectedActivity = btn.dataset.id;
+                if (previousActivity === null && app) {
+                    app.style.setProperty('--sidebar-width', `${DEFAULT_SIDEBAR_WIDTH}px`);
+                }
+            }
             updateActivitySelection();
         });
     });
@@ -146,5 +165,104 @@ function initActivityControls() {
                 btn.classList.remove('selected');
             }
         });
+
+        if (sidebar) {
+            sidebar.style.display = selectedActivity ? 'block' : 'none';
+            if (!selectedActivity) {
+                const app = document.querySelector('.app');
+                if (app) app.style.setProperty('--sidebar-width', '0px');
+            }
+        }
+        if (activityLabel) {
+            activityLabel.textContent = selectedActivity ? (ACTIVITY_NAMES[selectedActivity] || '') : '';
+        }
+        previousActivity = selectedActivity;
     }
+}
+
+function initSidebarResize() {
+    const resizer = document.querySelector(".sidebar-resizer");
+    const app = document.querySelector(".app");
+    if (!resizer || !app) return;
+
+    let isResizing = false;
+    const MIN_WIDTH = 100;
+
+    function clampSidebar(width) {
+        const max = window.innerWidth - 100;
+        return Math.max(MIN_WIDTH, Math.min(max, width));
+    }
+
+    resizer.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        isResizing = true;
+        resizer.classList.add("active");
+        document.body.style.cursor = "ew-resize";
+        document.body.style.userSelect = "none";
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!isResizing) return;
+        const activityWidth = parseInt(getComputedStyle(app).getPropertyValue("--activitybar-width"));
+        const rawWidth = e.clientX - activityWidth;
+        const clamped = clampSidebar(rawWidth);
+        app.style.setProperty("--sidebar-width", `${clamped}px`);
+    });
+
+    window.addEventListener("mouseup", () => {
+        isResizing = false;
+        resizer.classList.remove("active");
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+    });
+
+    window.addEventListener("resize", () => {
+        const current = parseInt(getComputedStyle(app).getPropertyValue("--sidebar-width"));
+        const clamped = clampSidebar(current);
+        app.style.setProperty("--sidebar-width", `${clamped}px`);
+    });
+}
+
+function initTerminalResize() {
+    const resizer = document.querySelector(".terminal-resizer");
+    const app = document.querySelector(".app");
+    if (!resizer || !app) return;
+
+    let isResizing = false;
+    const MIN_HEIGHT = 50;
+
+    function clampTerminal(height) {
+        const menubar = parseInt(getComputedStyle(app).getPropertyValue("--menubar-height"));
+        const statusbar = parseInt(getComputedStyle(app).getPropertyValue("--statusbar-height"));
+        const max = window.innerHeight - menubar - statusbar - 50;
+        return Math.max(MIN_HEIGHT, Math.min(max, height));
+    }
+
+    resizer.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        isResizing = true;
+        resizer.classList.add("active");
+        document.body.style.cursor = "ns-resize";
+        document.body.style.userSelect = "none";
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!isResizing) return;
+        const statusbar = parseInt(getComputedStyle(app).getPropertyValue("--statusbar-height"));
+        const rawHeight = window.innerHeight - e.clientY - statusbar;
+        const clamped = clampTerminal(rawHeight);
+        app.style.setProperty("--terminal-height", `${clamped}px`);
+    });
+
+    window.addEventListener("mouseup", () => {
+        isResizing = false;
+        resizer.classList.remove("active");
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+    });
+
+    window.addEventListener("resize", () => {
+        const current = parseInt(getComputedStyle(app).getPropertyValue("--terminal-height"));
+        app.style.setProperty("--terminal-height", `${clampTerminal(current)}px`);
+    });
 }
