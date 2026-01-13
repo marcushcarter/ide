@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Ballistic Code</title>
-    <link href="styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css">
 </head>
 <body class="app">
 
@@ -46,21 +47,27 @@
 
     <div class="side-bar">
         <div id="current-activity"></div>
-        <div id="current-file-path"></div>
-        <div id="current-folder-path"></div>
+
+        <div id="filesystem-panel" class="sidebar-panel">FILESYSTEM
+            <img src="../assets/icons/icon.png">
+        </div>
+        <div id="git-panel" class="sidebar-panel">GIT</div>
+        <div id="cmake-panel" class="sidebar-panel">CMAKE</div>
+        <div id="profile-panel" class="sidebar-panel">PROFILE</div>
+        <div id="settings-panel" class="sidebar-panel">SETTINGS</div>
 
         <div class="sidebar-resizer"></div>
     </div>
     
-    <div class="terminal">
-        <span>The terminal is not available yet</span>
-
+    <div id="terminal" class="terminal">
+        <div id="terminal-container" style="width:100%;height:100%;"></div>
         <div class="terminal-resizer"></div>
     </div>
 
-
     <div class="editor"></div>
 
+    <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+    <script src="https://unpkg.com/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
     <script src="renderer.js"></script>
 </body>
 </html>

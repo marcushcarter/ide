@@ -1,4 +1,7 @@
 
+const { Terminal } = window;
+const { FitAddon } = window;
+
 let currentFilePath = null;
 let currentFolderPath = null;
 
@@ -6,6 +9,14 @@ const currentFilePathEl = document.getElementById("current-file-path");
 const currentFolderPathEl = document.getElementById("current-folder-path");
 
 let selectedActivity = null;
+
+const ICONS = {
+    files: "../assets/fonts/vscode-codicon/files.svg",
+    git: "../assets/fonts/vscode-codicon/git-branch.svg",
+    cmake: "../assets/icons/cmake.svg",
+    account: "../assets/fonts/vscode-codicon/account.svg",
+    settings: "../assets/fonts/vscode-codicon/settings-gear.svg"
+};
 
 window.addEventListener('DOMContentLoaded', () => {
     injectIcons();
@@ -15,15 +26,8 @@ window.addEventListener('DOMContentLoaded', () => {
     initActivityControls();
     initSidebarResize();
     initTerminalResize();
+    initTerminal();
 });
-
-const ICONS = {
-    files: "../assets/fonts/vscode-codicon/files.svg",
-    git: "../assets/fonts/vscode-codicon/git-branch.svg",
-    cmake: "../assets/icons/cmake.svg",
-    account: "../assets/fonts/vscode-codicon/account.svg",
-    settings: "../assets/fonts/vscode-codicon/settings-gear.svg"
-};
 
 function injectIcons(root = document) {
     root.querySelectorAll("[data-icon]").forEach(el => {
@@ -83,23 +87,15 @@ function initMenuDropdown() {
         });
     });
 
-    async function handleMenuAction(action) {
-        switch (action) {
+    window.handleMenuAction = async function(action) {
+        switch(action) {
             case "open-folder":
                 const folder = await window.electronAPI.openProjectFolder();
-                if (folder) {
-                    currentFolderPath = folder;
-                    console.log("Current project folder:", currentFolderPath);
-                    currentFilePathEl.textContent = currentFolderPath;
-                }
+                if (folder) selectFolder(folder);
                 break;
             case "open-file":
                 const file = await window.electronAPI.openFile();
-                if (file) {
-                    currentFilePath = file;
-                    console.log("Current file path:", currentFilePath);
-                    currentFolderPathEl.textContent = currentFilePath;
-                }
+                if (file) openFile(file);
                 break;
             default:
                 console.warn("Unknown menu action:", action);
@@ -133,12 +129,12 @@ function initActivityControls() {
         settings: 'Settings'
     };
 
-    // if (activityButtons.length > 0) {
-    //     selectedActivity = activityButtons[0].dataset.id;
-    //     previousActivity = selectedActivity;
-    //     if (app) app.style.setProperty('--sidebar-width', `${DEFAULT_SIDEBAR_WIDTH}px`);
-    //     if (activityLabel) activityLabel.textContent = ACTIVITY_NAMES[selectedActivity] || '';
-    // }
+    if (activityButtons.length > 0) {
+        selectedActivity = activityButtons[0].dataset.id;
+        previousActivity = selectedActivity;
+        if (app) app.style.setProperty('--sidebar-width', `${DEFAULT_SIDEBAR_WIDTH}px`);
+        if (activityLabel) activityLabel.textContent = ACTIVITY_NAMES[selectedActivity] || '';
+    }
 
     activityButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -159,24 +155,34 @@ function initActivityControls() {
 
     function updateActivitySelection() {
         activityButtons.forEach(btn => {
-            if (btn.dataset.id === selectedActivity) {
-                btn.classList.add('selected');
-            } else {
-                btn.classList.remove('selected');
-            }
+            btn.classList.toggle('selected', btn.dataset.id === selectedActivity);
         });
 
         if (sidebar) {
             sidebar.style.display = selectedActivity ? 'block' : 'none';
-            if (!selectedActivity) {
-                const app = document.querySelector('.app');
-                if (app) app.style.setProperty('--sidebar-width', '0px');
+            if (!selectedActivity && app) {
+                app.style.setProperty('--sidebar-width', '0px');
             }
         }
+
         if (activityLabel) {
             activityLabel.textContent = selectedActivity ? (ACTIVITY_NAMES[selectedActivity] || '') : '';
         }
+
         previousActivity = selectedActivity;
+
+        const panels = {
+            files: document.getElementById("filesystem-panel"),
+            git: document.getElementById("git-panel"),
+            cmake: document.getElementById("cmake-panel"),
+            profile: document.getElementById("profile-panel"),
+            settings: document.getElementById("settings-panel")
+        };
+
+        for (const key in panels) {
+            if (!panels[key]) continue;
+            panels[key].classList.toggle('active', key === selectedActivity);
+        }
     }
 }
 
@@ -265,4 +271,32 @@ function initTerminalResize() {
         const current = parseInt(getComputedStyle(app).getPropertyValue("--terminal-height"));
         app.style.setProperty("--terminal-height", `${clampTerminal(current)}px`);
     });
+}
+
+function initTerminal() {
+    const terminalContainer = document.getElementById('terminal-container');
+    if (!terminalContainer) return;
+
+    const term = new Terminal({
+        fontFamily: '"Fira Code", monospace',
+        fontSize: 14,
+        cursorBlink: true,
+        theme: { background: '#1e1e1e', foreground: '#ffffff' },
+        disableStdin: false
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+
+    term.open(terminalContainer);
+    fitAddon.fit();
+
+    term.focus();
+
+    // Terminal input/output hooks
+    term.onData(data => window.electronAPI.sendTerminalInput(data));
+    window.electronAPI.onTerminalOutput(data => term.write(data));
+
+    // Resize terminal when window resizes or sidebar changes
+    window.addEventListener('resize', resize);
 }

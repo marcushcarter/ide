@@ -8,5 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
 
     openProjectFolder: () => ipcRenderer.invoke("open-folder-dialog"),
-    openFile: () => ipcRenderer.invoke("open-file-dialog")
+    openFile: () => ipcRenderer.invoke("open-file-dialog"),
+
+    sendTerminalInput: (data) => ipcRenderer.send('terminal-input', data),
+    onTerminalOutput: (callback) => ipcRenderer.on('terminal-output', (event, data) => callback(data))
 });

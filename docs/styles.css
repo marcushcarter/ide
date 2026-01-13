@@ -226,6 +226,14 @@
     opacity: 0.75;
 }
 
+.sidebar-panel {
+    display: none;
+}
+
+.sidebar-panel.active {
+    display: block;
+}
+
 /* TERMINAL */
 
 .terminal {
