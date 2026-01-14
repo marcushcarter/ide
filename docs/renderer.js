@@ -12,6 +12,9 @@ let selectedActivity = null;
 let lastActiveActivity = null;
 let lastSidebarWidth = 200;
 
+let term;
+let fitAddon;
+
 const ICONS = {
     files: "../assets/fonts/vscode-codicon/files.svg",
     git: "../assets/fonts/vscode-codicon/git-branch.svg",
@@ -274,7 +277,7 @@ function initSidebar() {
 
 function initTerminal() {
     const termContainer = document.getElementById('terminal');
-    const term = new Terminal({
+    term = new Terminal({
         fontFamily: '"Fira Code", monospace',
         fontSize: 10,
         cursorBlink: true,
@@ -285,7 +288,7 @@ function initTerminal() {
         }
     });
 
-    const fitAddon = new FitAddon.FitAddon();
+    fitAddon = new FitAddon.FitAddon();
     term.loadAddon(fitAddon);
 
     term.open(termContainer);
@@ -293,11 +296,8 @@ function initTerminal() {
     term.focus();
 
     term.onData(data => window.electronAPI.sendTerminalInput(data));
-
     window.electronAPI.onTerminalOutput(data => term.write(data));
-    function setTerminalFolder(path) {
-        window.electronAPI.changeTerminalDir(path);
-    }
+    window.electronAPI.onTerminalClear(() => { term.reset(); fitAddon.fit(); });
     
     const resizer = document.querySelector(".terminal-resizer");
     const app = document.querySelector(".app");

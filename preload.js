@@ -12,5 +12,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     sendTerminalInput: (data) => ipcRenderer.send('terminal-input', data),
     onTerminalOutput: (callback) => ipcRenderer.on('terminal-output', (event, data) => callback(data)),
-    changeTerminalDir: (dir) => ipcRenderer.send('terminal-change-dir', dir)
+    changeTerminalDir: (dir) => ipcRenderer.send('terminal-change-dir', dir),
+    onTerminalClear: (callback) => ipcRenderer.on('terminal-clear', () => callback())
 });

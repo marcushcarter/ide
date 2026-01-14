@@ -58,6 +58,9 @@ function createWindow() {
     function startTerminal() {
         if (terminalProcess) terminalProcess.kill();
 
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) win.webContents.send('terminal-clear');
+
         terminalProcess = pty.spawn('cmd.exe', [], {
             name: 'xterm-color',
             cwd: currentDir,
@@ -66,15 +69,13 @@ function createWindow() {
             env: process.env
         });
 
-        // Send output to renderer
         terminalProcess.onData(data => {
             BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', data);
         });
 
-        // Optional: handle exit
-        terminalProcess.onExit(() => {
-            BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', '\r\n[Process exited]\r\n');
-        });
+        // terminalProcess.onExit(() => {
+        //     BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', '\r\n[Process exited]\r\n');
+        // });
     }
 }
 
