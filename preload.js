@@ -11,5 +11,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openFile: () => ipcRenderer.invoke("open-file-dialog"),
 
     sendTerminalInput: (data) => ipcRenderer.send('terminal-input', data),
-    onTerminalOutput: (callback) => ipcRenderer.on('terminal-output', (event, data) => callback(data))
+    onTerminalOutput: (callback) => ipcRenderer.on('terminal-output', (event, data) => callback(data)),
+    changeTerminalDir: (dir) => ipcRenderer.send('terminal-change-dir', dir)
 });

@@ -2,8 +2,6 @@
 const { Terminal } = window;
 const { FitAddon } = window;
 
-let term, fitAddon;
-
 let currentFilePath = null;
 let currentFolderPath = null;
 
@@ -11,6 +9,8 @@ const currentFilePathEl = document.getElementById("current-file-path");
 const currentFolderPathEl = document.getElementById("current-folder-path");
 
 let selectedActivity = null;
+let lastActiveActivity = null;
+let lastSidebarWidth = 200;
 
 const ICONS = {
     files: "../assets/fonts/vscode-codicon/files.svg",
@@ -25,14 +25,13 @@ window.addEventListener('DOMContentLoaded', () => {
     initWindowControls();
     initMenuDropdown();
     initButtonControls();
-    initActivityControls();
-    initSidebarResize();
-    initTerminalResize();
+    initActivityBar();
+    initSidebar();
     initTerminal();
 });
 
-function injectIcons(root = document) {
-    root.querySelectorAll("[data-icon]").forEach(el => {
+function injectIcons() {
+    document.querySelectorAll("[data-icon]").forEach(el => {
         if (el.dataset.iconInjected) return;
         const iconName = el.dataset.icon;
         const path = ICONS[iconName];
@@ -114,14 +113,11 @@ function initButtonControls() {
     });
 }
 
-function initActivityControls() {
+function updateActivitySelection() {
     const activityButtons = document.querySelectorAll('.activity-btn');
     const app = document.querySelector('.app');
     const sidebar = document.querySelector('.side-bar');
     const activityLabel = document.getElementById('current-activity');
-    const DEFAULT_SIDEBAR_WIDTH = 200;
-
-    let previousActivity = null;
 
     const ACTIVITY_NAMES = {
         files: 'Files',
@@ -131,114 +127,167 @@ function initActivityControls() {
         settings: 'Settings'
     };
 
-    if (activityButtons.length > 0) {
-        selectedActivity = activityButtons[0].dataset.id;
-        previousActivity = selectedActivity;
-        if (app) app.style.setProperty('--sidebar-width', `${DEFAULT_SIDEBAR_WIDTH}px`);
-        if (activityLabel) activityLabel.textContent = ACTIVITY_NAMES[selectedActivity] || '';
+    activityButtons.forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.id === selectedActivity);
+    });
+
+    if (sidebar) {
+        sidebar.style.display = selectedActivity ? 'block' : 'none';
     }
+
+    if (activityLabel) {
+        activityLabel.textContent = selectedActivity
+            ? (ACTIVITY_NAMES[selectedActivity] || '')
+            : '';
+    }
+
+    const panels = {
+        files: document.getElementById("filesystem-panel"),
+        git: document.getElementById("git-panel"),
+        cmake: document.getElementById("cmake-panel"),
+        profile: document.getElementById("profile-panel"),
+        settings: document.getElementById("settings-panel")
+    };
+
+    for (const key in panels) {
+        if (!panels[key]) continue;
+        panels[key].classList.toggle('active', key === selectedActivity);
+    }
+}
+
+function initActivityBar() {
+    const activityButtons = document.querySelectorAll('.activity-btn');
+    const app = document.querySelector('.app');
+    const resizer = document.querySelector(".sidebar-resizer");
+    const DEFAULT_SIDEBAR_WIDTH = 200;
 
     activityButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
+
             if (selectedActivity === btn.dataset.id) {
                 selectedActivity = null;
+                app.style.setProperty('--sidebar-width', '0px');
             } else {
                 selectedActivity = btn.dataset.id;
-                if (previousActivity === null && app) {
-                    app.style.setProperty('--sidebar-width', `${DEFAULT_SIDEBAR_WIDTH}px`);
-                }
+                app.style.setProperty('--sidebar-width', `${lastSidebarWidth || DEFAULT_SIDEBAR_WIDTH}px`);
             }
+
             updateActivitySelection();
+
+            if (resizer) {
+                const width = parseInt(getComputedStyle(app).getPropertyValue("--sidebar-width"));
+                resizer.style.left = `calc(var(--activitybar-width) + ${width}px)`;
+            }
         });
     });
-
-    updateActivitySelection();
-
-    function updateActivitySelection() {
-        activityButtons.forEach(btn => {
-            btn.classList.toggle('selected', btn.dataset.id === selectedActivity);
-        });
-
-        if (sidebar) {
-            sidebar.style.display = selectedActivity ? 'block' : 'none';
-            if (!selectedActivity && app) {
-                app.style.setProperty('--sidebar-width', '0px');
-            }
-        }
-
-        if (activityLabel) {
-            activityLabel.textContent = selectedActivity ? (ACTIVITY_NAMES[selectedActivity] || '') : '';
-        }
-
-        previousActivity = selectedActivity;
-
-        const panels = {
-            files: document.getElementById("filesystem-panel"),
-            git: document.getElementById("git-panel"),
-            cmake: document.getElementById("cmake-panel"),
-            profile: document.getElementById("profile-panel"),
-            settings: document.getElementById("settings-panel")
-        };
-
-        for (const key in panels) {
-            if (!panels[key]) continue;
-            panels[key].classList.toggle('active', key === selectedActivity);
-        }
-    }
 }
 
-function initSidebarResize() {
+function initSidebar() {
+    const app = document.querySelector('.app');
+    const sidebar = document.querySelector('.side-bar');
     const resizer = document.querySelector(".sidebar-resizer");
-    const app = document.querySelector(".app");
+
+    if (app) app.style.setProperty('--sidebar-width', '0px');
+    if (sidebar) sidebar.style.display = 'none';
     if (!resizer || !app) return;
 
     let isResizing = false;
-    const MIN_WIDTH = 100;
-
-    function clampSidebar(width) {
-        const max = window.innerWidth - 100;
-        return Math.max(MIN_WIDTH, Math.min(max, width));
-    }
+    let pendingCollapse = false;
+    const MIN_WIDTH = 125;
+    const COLLAPSE_THRESHOLD = 40;
 
     resizer.addEventListener("mousedown", (e) => {
         e.preventDefault();
         isResizing = true;
-        resizer.classList.add("active");
+        pendingCollapse = false;
         document.body.style.cursor = "ew-resize";
         document.body.style.userSelect = "none";
     });
 
     window.addEventListener("mousemove", (e) => {
         if (!isResizing) return;
+
         const activityWidth = parseInt(getComputedStyle(app).getPropertyValue("--activitybar-width"));
         const rawWidth = e.clientX - activityWidth;
-        const clamped = clampSidebar(rawWidth);
-        app.style.setProperty("--sidebar-width", `${clamped}px`);
-        if (term && fitAddon) fitAddon.fit()
+        let width;
+
+        if (rawWidth <= COLLAPSE_THRESHOLD) {
+            pendingCollapse = true;
+            width = 0;
+        } else {
+            pendingCollapse = false;
+            width = Math.max(MIN_WIDTH, rawWidth);
+            if (!selectedActivity) {
+                selectedActivity = lastActiveActivity || 'files'; 
+                updateActivitySelection();
+            }
+        }
+        app.style.setProperty("--sidebar-width", `${width}px`);
+        resizer.style.left = `calc(var(--activitybar-width) + ${width}px)`;
+        const sidebar = document.querySelector(".side-bar");
+        if (sidebar) sidebar.style.display = width === 0 ? "none" : "block";
     });
 
     window.addEventListener("mouseup", () => {
+        if (!isResizing) return;
         isResizing = false;
-        resizer.classList.remove("active");
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
+
+        if (pendingCollapse) {
+            if (selectedActivity) lastActiveActivity = selectedActivity;
+            selectedActivity = null;
+            updateActivitySelection();
+            app.style.setProperty("--sidebar-width", "0px");
+            resizer.style.left = `calc(var(--activitybar-width) + 0px)`;
+        } else {
+            lastSidebarWidth = parseInt(getComputedStyle(app).getPropertyValue("--sidebar-width"));
+            app.style.setProperty("--sidebar-width", `${width}px`);
+            resizer.style.left = `calc(var(--activitybar-width) + ${width}px)`;
+            const sidebar = document.querySelector(".side-bar");
+            if (sidebar) sidebar.style.display = width === 0 ? "none" : (selectedActivity ? "block" : "none");
+
+        }
+
+        const finalWidth = parseInt(getComputedStyle(app).getPropertyValue("--sidebar-width"));
+        resizer.style.left = `calc(var(--activitybar-width) + ${finalWidth}px)`;
     });
 
     window.addEventListener("resize", () => {
         const current = parseInt(getComputedStyle(app).getPropertyValue("--sidebar-width"));
-        const clamped = clampSidebar(current);
-        app.style.setProperty("--sidebar-width", `${clamped}px`);
+        resizer.style.left = `calc(var(--activitybar-width) + ${current}px)`;
     });
 }
 
-function initTerminalResize() {
+function initTerminal() {
+    const termContainer = document.getElementById('terminal');
+    const term = new Terminal({
+        fontFamily: '"Fira Code", monospace',
+        fontSize: 14,
+        cursorBlink: true
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+
+    term.open(termContainer);
+    fitAddon.fit();
+    term.focus();
+
+    term.onData(data => window.electronAPI.sendTerminalInput(data));
+
+    window.electronAPI.onTerminalOutput(data => term.write(data));
+    function setTerminalFolder(path) {
+        window.electronAPI.changeTerminalDir(path);
+    }
+    
     const resizer = document.querySelector(".terminal-resizer");
     const app = document.querySelector(".app");
     if (!resizer || !app) return;
 
     let isResizing = false;
-    const MIN_HEIGHT = 50;
+    const MIN_HEIGHT = 0;
 
     function clampTerminal(height) {
         const menubar = parseInt(getComputedStyle(app).getPropertyValue("--menubar-height"));
@@ -274,75 +323,5 @@ function initTerminalResize() {
     window.addEventListener("resize", () => {
         const current = parseInt(getComputedStyle(app).getPropertyValue("--terminal-height"));
         app.style.setProperty("--terminal-height", `${clampTerminal(current)}px`);
-    });
-}
-
-function initTerminal() {
-    const terminalContainer = document.getElementById('terminal-container');
-    if (!terminalContainer) return;
-
-    term = new Terminal({
-        fontFamily: '"Fira Code", monospace',
-        fontSize: 14,
-        cursorBlink: true,
-        theme: { background: '#121212', foreground: '#ffffff' }
-    });
-
-    fitAddon = new FitAddon.FitAddon();
-    term.loadAddon(fitAddon);
-
-    term.open(terminalContainer);
-    fitAddon.fit();
-    term.focus();
-
-    // Terminal input/output
-    term.onData(data => window.electronAPI.sendTerminalInput(data));
-    window.electronAPI.onTerminalOutput(data => term.write(data));
-}
-
-function initTerminalResize() {
-    const resizer = document.querySelector(".terminal-resizer");
-    const terminalEl = document.getElementById("terminal");
-    const app = document.querySelector(".app");
-    if (!resizer || !terminalEl || !app) return;
-
-    let isResizing = false;
-    const MIN_HEIGHT = 50;
-
-    function clampTerminal(height) {
-        const menubar = parseInt(getComputedStyle(app).getPropertyValue("--menubar-height"));
-        const statusbar = parseInt(getComputedStyle(app).getPropertyValue("--statusbar-height"));
-        const max = window.innerHeight - menubar - statusbar - 50;
-        return Math.max(MIN_HEIGHT, Math.min(max, height));
-    }
-
-    resizer.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        isResizing = true;
-        resizer.classList.add("active");
-        document.body.style.cursor = "ns-resize";
-        document.body.style.userSelect = "none";
-    });
-
-    window.addEventListener("mousemove", (e) => {
-        if (!isResizing) return;
-        const statusbar = parseInt(getComputedStyle(app).getPropertyValue("--statusbar-height"));
-        const rawHeight = window.innerHeight - e.clientY - statusbar;
-        const clamped = clampTerminal(rawHeight);
-        app.style.setProperty("--terminal-height", `${clamped}px`);
-        if (term && fitAddon) fitAddon.fit(); // force terminal to resize
-    });
-
-    window.addEventListener("mouseup", () => {
-        isResizing = false;
-        resizer.classList.remove("active");
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-    });
-
-    window.addEventListener("resize", () => {
-        const current = parseInt(getComputedStyle(app).getPropertyValue("--terminal-height"));
-        app.style.setProperty("--terminal-height", `${clampTerminal(current)}px`);
-        if (term && fitAddon) fitAddon.fit();
     });
 }
