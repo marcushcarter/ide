@@ -57,6 +57,18 @@ function initWindowControls() {
     });
 }
 
+function selectFolder(folder) {
+    currentFolderPath = folder;
+    if (currentFolderPathEl) currentFolderPathEl.textContent = folder;
+    if (window.electronAPI && window.electronAPI.changeTerminalDir) {
+        window.electronAPI.changeTerminalDir(folder);
+    }
+    if (!selectedActivity) {
+        selectedActivity = 'files';
+        updateActivitySelection();
+    }
+}
+
 function initMenuDropdown() {
     const menuBtn = document.getElementById("menu-btn");
     const menuDropdown = document.getElementById("menu-dropdown");
@@ -264,8 +276,13 @@ function initTerminal() {
     const termContainer = document.getElementById('terminal');
     const term = new Terminal({
         fontFamily: '"Fira Code", monospace',
-        fontSize: 14,
-        cursorBlink: true
+        fontSize: 10,
+        cursorBlink: true,
+        theme: {
+            background: '#121212',
+            foreground: '#ffffff',
+            cursor: '#ffffff'
+        }
     });
 
     const fitAddon = new FitAddon.FitAddon();

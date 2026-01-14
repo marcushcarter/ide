@@ -19,6 +19,7 @@
     --dark-panel-bg: #121212;
 
     overflow: hidden;
+    font-size: 10px;
 }
 
 /* MENU BAR */
@@ -37,7 +38,6 @@
 
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
     
     -webkit-user-select: none;
     -webkit-app-region: drag;
@@ -88,7 +88,6 @@
     left: 0;
     min-width: 125px;
     z-index: 1000;
-    font-size: 8px;
 
     background-color: var(--light-panel-bg);
     border: var(--border);
@@ -233,12 +232,24 @@
 
 /* TERMINAL */
 
-.terminal {
+.terminal-panel {
     position: absolute;
     bottom: calc(var(--statusbar-height)/2);
     left: calc((var(--activitybar-width) + var(--sidebar-width))/2);
     width: calc(100vw - var(--activitybar-width) - var(--sidebar-width));
     height: var(--terminal-height);
+    z-index: 0;
+    
+    background-color: var(--dark-panel-bg);
+    border-top: var(--border);
+}
+
+.terminal {
+    position: absolute;
+    bottom: calc(var(--statusbar-height)/2);
+    left: calc((var(--activitybar-width) + var(--sidebar-width))/2);
+    width: calc(100vw - var(--activitybar-width) - var(--sidebar-width));
+    height: calc(var(--terminal-height));
     z-index: 1;
     
     background-color: var(--dark-panel-bg);

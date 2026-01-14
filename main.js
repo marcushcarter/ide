@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, Tray } = require("electron");
 const path = require("path");
-const { spawn } = require('child_process');
+const pty = require('node-pty');
 
 let terminalProcess = null;
 let currentDir = process.cwd();
@@ -28,7 +28,6 @@ function createWindow() {
     ipcMain.on('window-control', (event, action) => {
         const win = BrowserWindow.getFocusedWindow();
         if (!win) return;
-
         switch(action) {
             case 'minimize': win.minimize(); break;
             case 'maximize': win.isMaximized() ? win.unmaximize() : win.maximize(); break;
@@ -49,24 +48,31 @@ function createWindow() {
         return result.canceled ? null : result.filePaths[0];
     });
 
-    win.webContents.on('did-finish-load', () => {
+    ipcMain.on('terminal-change-dir', (event, dir) => {
+        currentDir = dir;
         startTerminal();
     });
+
+    win.webContents.on('did-finish-load', () => { startTerminal(); });
 
     function startTerminal() {
         if (terminalProcess) terminalProcess.kill();
 
-        terminalProcess = spawn('cmd.exe', { cwd: currentDir, shell: true });
-
-        terminalProcess.stdout.on('data', data => {
-            BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', data.toString());
+        terminalProcess = pty.spawn('cmd.exe', [], {
+            name: 'xterm-color',
+            cwd: currentDir,
+            cols: 80,
+            rows: 30,
+            env: process.env
         });
 
-        terminalProcess.stderr.on('data', data => {
-            BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', data.toString());
+        // Send output to renderer
+        terminalProcess.onData(data => {
+            BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', data);
         });
 
-        terminalProcess.on('exit', () => {
+        // Optional: handle exit
+        terminalProcess.onExit(() => {
             BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', '\r\n[Process exited]\r\n');
         });
     }
@@ -74,15 +80,10 @@ function createWindow() {
 
 ipcMain.on('terminal-input', (event, data) => {
     if (terminalProcess) {
-        terminalProcess.stdin.write(data);
+        terminalProcess.write(data);
     }
 });
 
-// Change terminal directory
-ipcMain.on('terminal-change-dir', (event, dir) => {
-    currentDir = dir;
-    startTerminal(); // restart terminal in new folder
-});
 
 app.whenReady().then(createWindow);
 
