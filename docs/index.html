@@ -42,17 +42,42 @@
             <button class="activity-btn" data-id="settings" data-icon="settings"></button>
         </div>
     </div>
+        <div class="side-bar">
 
-    <div class="side-bar"><div id="current-activity"></div></div>
+        <div id="current-activity"></div>
+
+        <div class="sidebar-panel" id="filesystem-panel">
+            Files content
+        </div>
+
+        <div class="sidebar-panel" id="git-panel">
+            Git content
+        </div>
+
+        <div class="sidebar-panel" id="cmake-panel">
+            CMake content
+        </div>
+
+        <div class="sidebar-panel" id="profile-panel">
+            Profile content
+        </div>
+
+        <div class="sidebar-panel" id="settings-panel">
+            Settings content
+        </div>
+    </div>
     <div class="sidebar-resizer"></div>
     
-    <div id="terminal" class="terminal"></div>
     <div class="terminal-panel"></div>
+    <div id="terminal" class="terminal"></div>
     <div class="terminal-resizer"></div>
 
     <div class="status-bar"></div>
 
-    <div class="editor"></div>
+    <div class="editor-container">
+        <textarea id="editor"></textarea>
+    </div>
+
 
     <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
     <script src="https://unpkg.com/xterm-addon-fit/lib/xterm-addon-fit.js"></script>

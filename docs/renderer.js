@@ -7,6 +7,7 @@ let currentFolderPath = null;
 
 const currentFilePathEl = document.getElementById("current-file-path");
 const currentFolderPathEl = document.getElementById("current-folder-path");
+const editorEl = document.getElementById("editor");
 
 let selectedActivity = null;
 let lastActiveActivity = null;
@@ -14,6 +15,10 @@ let lastSidebarWidth = 200;
 
 let term;
 let fitAddon;
+
+let fsRoot = null;
+let selectedNode = null;
+
 
 const ICONS = {
     files: "../assets/fonts/vscode-codicon/files.svg",
@@ -31,7 +36,149 @@ window.addEventListener('DOMContentLoaded', () => {
     initActivityBar();
     initSidebar();
     initTerminal();
+
+    window.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        saveFile();
+    }
 });
+});
+
+class FSNode {
+    constructor({ name, path, type, parent = null, depth = 0 }) {
+        this.name = name;
+        this.path = path;
+        this.type = type;
+        this.parent = parent;
+        this.depth = depth;
+
+        this.children = null;
+        this.expanded = false;
+        this.dom = null;
+        this.childrenEl = null;
+    }
+}
+
+
+function buildRoot(path) {
+    fsRoot = new FSNode({
+        name: path.split(/[\\/]/).pop(),
+        path,
+        type: "dir"
+    });
+}
+
+async function loadChildren(node) {
+    if (node.type !== "dir") return;
+    if (node.children !== null) return;
+
+    const entries = await window.electronAPI.readDir(node.path);
+
+    entries.sort((a, b) => {
+        // dirs first
+        if (a.type !== b.type) {
+            return a.type === "dir" ? -1 : 1;
+        }
+
+        // same type: alphabetical
+        return a.name.localeCompare(b.name, undefined, {
+            sensitivity: "base"
+        });
+    });
+
+    node.children = entries.map(e =>
+        new FSNode({
+            name: e.name,
+            path: e.path,
+            type: e.type,
+            parent: node,
+            depth: node.depth + 1
+        })
+    );
+
+}
+
+function renderNode(node) {
+    if (node.dom) return node.dom;
+
+    const row = document.createElement("div");
+    row.className = "fs-row";
+    row.style.paddingLeft = `${node.depth * 14}px`;
+
+    const chevron = document.createElement("div");
+    chevron.className = "fs-chevron";
+    chevron.textContent = node.type === "dir" ? "▶" : "";
+    row.appendChild(chevron);
+
+    const label = document.createElement("div");
+    label.className = "fs-label";
+    label.textContent = node.name;
+    row.appendChild(label);
+
+    const container = document.createElement("div");
+    container.className = "fs-node";
+    container.appendChild(row);
+
+    node.dom = container;
+
+    if (node.type === "dir") {
+        const childrenEl = document.createElement("div");
+        childrenEl.className = "fs-children";
+        childrenEl.style.display = "none";
+        container.appendChild(childrenEl);
+        node.childrenEl = childrenEl;
+
+        // Folder click toggles expand/collapse anywhere on row
+        row.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            node.expanded = !node.expanded;
+            chevron.style.transform = node.expanded ? "rotate(90deg)" : "";
+
+            if (node.expanded) {
+                await loadChildren(node);
+                childrenEl.style.display = "block";
+
+                if (childrenEl.childElementCount === 0) {
+                    for (const child of node.children) {
+                        childrenEl.appendChild(renderNode(child));
+                    }
+                }
+            } else {
+                childrenEl.style.display = "none";
+            }
+
+            // folder selection highlight (optional)
+            if (selectedNode?.dom) selectedNode.dom.classList.remove("selected");
+            selectedNode = node;
+            container.classList.add("selected");
+        });
+    } else {
+        // File click selects
+        row.addEventListener("click", (e) => {
+            e.stopPropagation();
+
+            if (selectedNode?.dom) selectedNode.dom.classList.remove("selected");
+
+            selectedNode = node;
+            container.classList.add("selected");
+
+            openFile(node.path);
+            currentFilePath = node.path;
+            // hook openFile(node.path) here if you want to immediately open
+        });
+    }
+
+    return container;
+}
+
+function renderFilesystem() {
+    const panel = document.getElementById("filesystem-panel");
+    if (!panel || !fsRoot) return;
+
+    panel.innerHTML = "";
+    panel.appendChild(renderNode(fsRoot));
+}
 
 function injectIcons() {
     document.querySelectorAll("[data-icon]").forEach(el => {
@@ -63,13 +210,28 @@ function initWindowControls() {
 function selectFolder(folder) {
     currentFolderPath = folder;
     if (currentFolderPathEl) currentFolderPathEl.textContent = folder;
-    if (window.electronAPI && window.electronAPI.changeTerminalDir) {
-        window.electronAPI.changeTerminalDir(folder);
-    }
+
+    buildRoot(folder);
+    renderFilesystem();
+
     if (!selectedActivity) {
         selectedActivity = 'files';
         updateActivitySelection();
     }
+}
+
+function openFile(path) {
+    window.electronAPI.readFile(path).then(content => {
+        editorEl.value = content;
+        currentFilePath = path;
+        if (currentFilePathEl) currentFilePathEl.textContent = currentFilePath;
+    });
+}
+
+function saveFile() {
+    if (!currentFilePath) return;
+    const content = editorEl.value;
+    window.electronAPI.writeFile(currentFilePath, content);
 }
 
 function initMenuDropdown() {
@@ -276,7 +438,11 @@ function initSidebar() {
 }
 
 function initTerminal() {
-    const termContainer = document.getElementById('terminal');
+    const container = document.getElementById('terminal');
+    const resizer = document.querySelector(".terminal-resizer");
+    const app = document.querySelector(".app");
+    if (!container  || !resizer || !app) return;
+    
     term = new Terminal({
         fontFamily: '"Fira Code", monospace',
         fontSize: 10,
@@ -288,20 +454,14 @@ function initTerminal() {
         }
     });
 
-    fitAddon = new FitAddon.FitAddon();
-    term.loadAddon(fitAddon);
+    // fitAddon = new FitAddon();
+    // term.loadAddon(fitAddon);
+    term.open(container);
+    // fitAddon.fit();
 
-    term.open(termContainer);
-    fitAddon.fit();
-    term.focus();
-
-    term.onData(data => window.electronAPI.sendTerminalInput(data));
-    window.electronAPI.onTerminalOutput(data => term.write(data));
-    window.electronAPI.onTerminalClear(() => { term.reset(); fitAddon.fit(); });
-    
-    const resizer = document.querySelector(".terminal-resizer");
-    const app = document.querySelector(".app");
-    if (!resizer || !app) return;
+    window.terminalAPI.onOutput(data => term.write(data));
+    window.terminalAPI.start();
+    term.onData(data => window.terminalAPI.send(data));
 
     let isResizing = false;
     const MIN_HEIGHT = 0;
@@ -309,7 +469,7 @@ function initTerminal() {
     function clampTerminal(height) {
         const menubar = parseInt(getComputedStyle(app).getPropertyValue("--menubar-height"));
         const statusbar = parseInt(getComputedStyle(app).getPropertyValue("--statusbar-height"));
-        const max = window.innerHeight - menubar - statusbar - 50;
+        const max = window.innerHeight - menubar - statusbar - 4;
         return Math.max(MIN_HEIGHT, Math.min(max, height));
     }
 

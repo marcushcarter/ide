@@ -1,9 +1,9 @@
 const { app, BrowserWindow, ipcMain, dialog, Tray } = require("electron");
+const { spawn } = require("child_process");
 const path = require("path");
-const pty = require('node-pty');
+const fs = require("fs");
 
-let terminalProcess = null;
-let currentDir = process.cwd();
+let shell = null;
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -21,7 +21,7 @@ function createWindow() {
         }
     });
 
-    const tray = new Tray(path.join(__dirname, "assets/icons/icon.ico"));
+    new Tray(path.join(__dirname, "assets/icons/icon.ico"));
 
     win.loadFile("docs/index.html");
 
@@ -48,45 +48,59 @@ function createWindow() {
         return result.canceled ? null : result.filePaths[0];
     });
 
-    ipcMain.on('terminal-change-dir', (event, dir) => {
-        currentDir = dir;
-        startTerminal();
+    ipcMain.handle("fs:readDir", async (_, dirPath) => {
+        const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+
+        return entries.map(entry => ({
+            name: entry.name,
+            path: path.join(dirPath, entry.name),
+            type: entry.isDirectory() ? "dir" : "file",
+            children: entry.isDirectory() ? null : undefined
+        }));
     });
 
-    win.webContents.on('did-finish-load', () => { startTerminal(); });
+    ipcMain.handle("fs:readFile", async (_, filePath) => {
+        return fs.promises.readFile(filePath, "utf-8");
+    });
 
-    function startTerminal() {
-        if (terminalProcess) terminalProcess.kill();
-
-        const win = BrowserWindow.getAllWindows()[0];
-        if (win) win.webContents.send('terminal-clear');
-
-        terminalProcess = pty.spawn('cmd.exe', [], {
-            name: 'xterm-color',
-            cwd: currentDir,
-            cols: 80,
-            rows: 30,
-            env: process.env
-        });
-
-        terminalProcess.onData(data => {
-            BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', data);
-        });
-
-        // terminalProcess.onExit(() => {
-        //     BrowserWindow.getAllWindows()[0].webContents.send('terminal-output', '\r\n[Process exited]\r\n');
-        // });
-    }
+    ipcMain.handle("fs:writeFile", async (_, filePath, content) => {
+        await fs.promises.writeFile(filePath, content, "utf-8");
+        return true;
+    });
 }
 
-ipcMain.on('terminal-input', (event, data) => {
-    if (terminalProcess) {
-        terminalProcess.write(data);
-    }
+ipcMain.on("start-shell", (event) => {
+    if (shell) return;
+
+    shell = spawn("cmd.exe", [], {
+        env: process.env,
+        cwd: process.cwd()
+    });
+
+    shell.stdout.on("data", data => {
+        event.sender.send("terminal-output", data.toString());
+    });
+
+    shell.stderr.on("data", data => {
+        event.sender.send("terminal-output", data.toString());
+    });
+
+    shell.on("exit", () => {
+        shell = null;
+        event.sender.send("terminal-output", "\r\n[process exited]\r\n");
+    });
 });
 
+ipcMain.on("terminal-input", (_, input) => {
+    if (shell) shell.stdin.write(input);
+});
 
 app.whenReady().then(createWindow);
 
-app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
-app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+app.on("window-all-closed", () => { 
+    if (process.platform !== "darwin") app.quit(); 
+});
+
+app.on("activate", () => { 
+    if (BrowserWindow.getAllWindows().length === 0) createWindow(); 
+});
